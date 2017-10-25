@@ -16,11 +16,13 @@ f = Expression("cos(20*x[0])", degree=4)
 r = 3
 n = 50
 mesh = UnitIntervalMesh(n)
-CG = FiniteElement('CG', mesh.ufl_cell(), r)
+DG = FiniteElement('DG', mesh.ufl_cell(), r)
+CG = FiniteElement('CG', mesh.ufl_cell(), r-1)
 R = FiniteElement('R', mesh.ufl_cell(), 0)
-X = FunctionSpace(mesh, CG*R)
-u, c = TrialFunctions(X)
-v, d = TestFunctions(X)
+X = FunctionSpace(mesh, DG)
+V = FunctionSpace(mesh, CG*R)
+u = TrialFunction(X)
+v, c = TestFunctions(V)
 
 # define initpoint(1) as the counting measure on the singleton set {0}
 class point0(SubDomain):
@@ -38,11 +40,10 @@ point1().mark(mask, 1)
 initpoint = ds(subdomain_data=mask)
 
 # define bilinear form and linear functional
-a = u.dx(0) * v * dx + u * d * initpoint(0) + c * v * initpoint(1)
+a = u.dx(0) * v * dx + c * v * initpoint(1)
 L = f * v * dx
 uc = Function(X)
 solve(a == L, uc)
-u, c = uc.split()
 plotmesh = UnitIntervalMesh(n*100)
-V0 = FunctionSpace(plotmesh, 'CG', 1)
+V0 = FunctionSpace(plotmesh, 'DG', 1)
 plot(interpolate(u, V0))

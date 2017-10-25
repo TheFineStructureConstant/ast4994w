@@ -16,9 +16,9 @@ f = Expression("cos(20*x[0])", degree=4)
 r = 3
 n = 50
 mesh = UnitIntervalMesh(n)
-CG = FiniteElement('CG', mesh.ufl_cell(), r)
+DG = FiniteElement('DG', mesh.ufl_cell(), r)
 R = FiniteElement('R', mesh.ufl_cell(), 0)
-X = FunctionSpace(mesh, CG*R)
+X = FunctionSpace(mesh, DG*R)
 u, c = TrialFunctions(X)
 v, d = TestFunctions(X)
 
@@ -44,5 +44,5 @@ uc = Function(X)
 solve(a == L, uc)
 u, c = uc.split()
 plotmesh = UnitIntervalMesh(n*100)
-V0 = FunctionSpace(plotmesh, 'CG', 1)
+V0 = FunctionSpace(plotmesh, 'DG', 1)
 plot(interpolate(u, V0))
