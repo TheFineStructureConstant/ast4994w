@@ -22,38 +22,59 @@ from dolfin import *
 # import matplotlib.pyplot as plt
 import sys
 
-# create boundary condition function
-def boundary(x, on_boundary):
-	return on_boundary and near(x[0], 0, 1e-14)
+# create boundary condition functions
+# define initpoint(1) as the counting measure on the singleton set {0}
+class point0(SubDomain):
+	def inside(self, x, on_boundary):
+		return near(x[0], 0.0)
+
+class point1(SubDomain):
+	def inside(self, x, on_boundary):
+		return near(x[0], 1.0)
+
+class point2(SubDomain):
+	def inside(self, x, on_boundary):
+		return near(x[0], 0.0)
+
 
 # get number of grid points
-n = int(sys.argv[1])
+# n = int(sys.argv[1])
+u_t0 = int(sys.argv[1])
 
 # create mesh
-mesh = UnitIntervalMesh(n)
+mesh = UnitIntervalMesh(10)
 
 # create function space
 P1 = FiniteElement('P', interval, 1)
-element = MixedElement([P1, P1])
+R = FiniteElement('R', interval, 0)
+element = MixedElement([P1, P1, R, R])
 CG = FunctionSpace(mesh, element)
 
 # create test and trial functions
-u,w= TrialFunction(CG)
-v,y = TestFunctions(CG)
+u,w,a,c = TrialFunctions(CG)
+v,y,b,d = TestFunctions(CG)
+
+# setup boundaries on mesh
+mask = MeshFunction('size_t', mesh, 0)
+mask.set_all(0)
+point0().mark(mask, 0)
+point1().mark(mask, 1)
+point2().mark(mask, u_t0)
+initpoint = ds(subdomain_data=mask)
 
 # create bilinear forms
-b1 = (u.dx(0)-w)*v*dx
-b2 = (w.dx(0)-u)*y*dx
-B = b1+b2
+b1 = (u.dx(0)-w)*v*dx + u*d*initpoint(0) + w*b*initpoint(2) + v*c*initpoint(1)
+b2 = (w.dx(0)-u)*y*dx + u*d*initpoint(0) + w*b*initpoint(2) + y*a*initpoint(1)
+L = b1+b2
 
-# define boundaries
-bc = DirichletBC(CG.sub(1), 0.0, boundary)
+# create linear functional
+F = Constant(0.0)*v*dx
 
 # solve variational problem
 sol = Function(CG)
-solve(B == 0, sol, bc)
+solve(L == F , sol)
 
-u,w = split(sol)
+u,w,a,c = split(sol)
 
 fileu = File('Anderson-Kimn-u-0.pvd')
 filew = File('Anderson-Kimn-w-0.pvd')
