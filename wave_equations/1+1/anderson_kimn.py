@@ -57,7 +57,7 @@ u_out = project(u,V)
 
 # output solution
 u_out.rename('u', 'a&k')
-if(len(sys.argv) ==2):
+if('plot' in sys.argv):
 		plot(u_out)
 		interactive()
 
