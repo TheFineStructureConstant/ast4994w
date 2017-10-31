@@ -63,6 +63,25 @@ f = Constant(0.0)*y*dx + Constant(0.0)*w*dx
 bc1 = DirichletBC(CG.sub(0), 0.0, boundary)
 bc2 = DirichletBC(CG.sub(1), 20.0, boundary)
 
+# solve linear system
+U = Function(V_CG)
+solve(B == f, U, [bc1, bc2])
+
+# get u from U
+u,v = U.split()
+
+# output solution
+u_out.rename('u', 'f_p_1+1')
+if('plot' in sys.argv):
+		plot(u)
+		interactive()
+
+else:
+	file_u = File('f_p.pvd')
+	file_u << u
+
+
+
 
 
 
