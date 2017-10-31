@@ -5,7 +5,7 @@ The method is first order in time using CG elements in time and space
 The problem is:
 u_tt = au
 u(0) = u_0 (=0)
-u_t(0) = u_1 (=0)
+u_t(0) = u_1 (=2)
 
 We let a = 1.
 
@@ -39,7 +39,7 @@ class point2(SubDomain):
 
 # get number of grid points
 # n = int(sys.argv[1])
-u_t0 = int(sys.argv[1])
+# u_t0 = int(sys.argv[1])
 
 # create mesh
 mesh = UnitIntervalMesh(10)
@@ -58,8 +58,8 @@ v,y,b,d = TestFunctions(CG)
 mask = MeshFunction('size_t', mesh, 0)
 mask.set_all(0)
 point0().mark(mask, 0)
-point1().mark(mask, 1)
-point2().mark(mask, u_t0)
+point1().mark(mask, 0)
+point2().mark(mask, 2)
 initpoint = ds(subdomain_data=mask)
 
 # create bilinear forms
@@ -74,10 +74,9 @@ F = Constant(0.0)*v*dx
 sol = Function(CG)
 solve(L == F , sol)
 
-u,w,a,c = split(sol)
+u,w,a,c = sol.split()
 
+# output u to file
+u.rename('u', 'a&k_0+1')
 fileu = File('Anderson-Kimn-u-0.pvd')
-filew = File('Anderson-Kimn-w-0.pvd')
-
 fileu << u
-filew << w
