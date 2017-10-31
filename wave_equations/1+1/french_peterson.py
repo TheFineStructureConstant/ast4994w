@@ -41,7 +41,7 @@ mesh = RectangleMesh(Point(0,0),Point(10,1),100,10)
 deg = 3
 CG = FiniteElement('P', triangle, deg)
 DG = FiniteElement('DP', triangle, deg-1)
-element = MixedElement([CG, CG, DG, DG])
+element = MixedElement([CG, CG, DG, CG])
 V = FunctionSpace(mesh, element)
 
 # create test and trial functions
