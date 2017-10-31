@@ -31,7 +31,8 @@ mesh = RectangleMesh(Point(0,0),Point(10,1),100,10)
 P1 = FiniteElement('P', triangle, 1)
 element = MixedElement([P1, P1])
 CG = FunctionSpace(mesh, element)
-V = FunctionSpace(mesh, P1)
+
+# create test and trial functions
 u,v = TrialFunctions(CG)
 w,y = TestFunctions(CG)
 
@@ -49,21 +50,20 @@ bc2 = DirichletBC(CG.sub(1), 20.0, boundary)
 
 # solve linear system
 U = Function(CG)
-solve(B ==L, U, [bc1,bc2])
+solve(B == L, U, [bc1,bc2])
 
 # get u from U
-u,v = split(U)
-u_out = project(u,V)
+u,v = U.split()
 
 # output solution
 u_out.rename('u', 'a&k')
 if('plot' in sys.argv):
-		plot(u_out)
-		interactive()
+	plot(u)
+	interactive()
 
 else:
 	file_u = File('a_k.pvd')
-	file_u << u_out
+	file_u << u
 
 
 
