@@ -31,25 +31,23 @@ def boundary(x, on_boundary):
 	return on_boundary and (near(x[1], 0.0, 1e-14) or near(x[1], 1.0, 1e-14))
 
 # create initial conditions
-def initial(x, on_boundary)
-	return on_boundary and near(x[0], 0.0, 1-e12)
+def initial(x, on_boundary):
+	return on_boundary and near(x[0], 0.0, 1e-14)
 
 # create mesh
 mesh = RectangleMesh(Point(0,0),Point(10,1),100,10)
 
 # create function spaces and fin
 deg = 3
-PCG = FiniteElement('P', triangle, deg)
-PDG = FiniteElement('dP', triangle, deg-1)
-CG_CG_elem = MixedElement([PCG, PCG])
-CG_DG_elem = MixedElement([PCG, PDG])
-V_CG = FunctionSpace(mesh, CG_CG_elem)
-V_DG = FunctionSpace(mesh, CG_DG_elem)
-V_out = FunctionSpace(mesh, PCG)
+CG = FiniteElement('P', triangle, deg)
+DG = FiniteElement('DP', triangle, deg-1)
+element = MixedElement([CG, CG, DG, DG])
+V = FunctionSpace(mesh, element)
 
 # create test and trial functions
-u,v = TrialFunctions(V_CG)
-w,y = TestFunctions(V_DG)
+# a,b,c,d are not used.
+u,v,c,d = TrialFunctions(V)
+a,b,w,y = TestFunctions(V)
 
 # create bilinear forms
 b1 = (u.dx(0) - v)*w*dx
@@ -60,18 +58,19 @@ B = b1+b2
 f = Constant(0.0)*y*dx + Constant(0.0)*w*dx
 
 # impose boundary conditions
-bc1 = DirichletBC(CG.sub(0), 0.0, boundary)
-bc2 = DirichletBC(CG.sub(1), 20.0, boundary)
+i1 = DirichletBC(V.sub(0), 0.0, initial)
+bc1 = DirichletBC(V.sub(0), 0.0, boundary)
+i2 = DirichletBC(V.sub(1), 20.0, initial)
 
 # solve linear system
-U = Function(V_CG)
-solve(B == f, U, [bc1, bc2])
+U = Function(V)
+solve(B == f, U, [i1, bc1, i2])
 
 # get u from U
-u,v = U.split()
+u,v,a,b = U.split()
 
 # output solution
-u_out.rename('u', 'f_p_1+1')
+u.rename('u', 'f_p_1+1')
 if('plot' in sys.argv):
 		plot(u)
 		interactive()
