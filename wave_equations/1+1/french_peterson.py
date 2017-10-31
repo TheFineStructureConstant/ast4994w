@@ -79,28 +79,3 @@ if('plot' in sys.argv):
 else:
 	file_u = File('f_p.pvd')
 	file_u << u
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
