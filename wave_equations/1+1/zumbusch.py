@@ -51,9 +51,11 @@ h_avg = avg(h)
 alpha = 0.5
 
 # define bilinear form
-b = u.dx(0)*v.dx(0)*dx - inner(avg(v.dx(1)), jump(u,n))*dS - inner(avg(u.dx(0)), jump(v,n))*dS + (alpha/h_avg)*inner(jump(u,n), jump(v,n))*dS
+b = u.dx(0)*v.dx(0)*dx - inner(avg(v.dx(1)), jump(u,n))*dS - inner(avg(u.dx(1)), jump(v,n))*dS + (alpha/h_avg)*inner(jump(u,n), jump(v,n))*dS
 
 # define linear functional
 f = Constant(0.0)*v*dx
 
 # create boundary conditions
+bc1 = DirichletBC(DG, 0.0, boundary)
+bc2 = DirichletBC(DG, 2.0, boundary)
