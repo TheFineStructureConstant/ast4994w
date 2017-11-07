@@ -83,6 +83,6 @@ def make_waves(n):
 # create list to hold error values
 errors = []
 for i in range(1,9):
-	errors.append(make_waves(i))
+	errors.append(sqrt(make_waves(i)))
 
 print errors
