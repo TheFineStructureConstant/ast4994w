@@ -17,11 +17,11 @@ To facilitate defining the bilinear form, let ()dt be integration wrt. time
 
 The bilinear form is
 
-b(u,v) = (u_t, v)dx - (u_t(0), v(0))dx + (u_t, v_t) + (u_x, v_x) - (avg(u_x), jump(v))dt
+b(u,v) = (u_t, v)dx + (u_t, v_t) + (u_x, v_x) - (avg(u_x), jump(v))dt
 		-(jump(u), avg(v_x))dt + 0.5/h *(jump(u), jump(v))dt
 
 The linear form is
-F(v) = (f,v)
+F(v) = (f,v) (u_t(0), v(0))dx
 
 Then the numerical scheme is find u \in DG such that
 
@@ -43,12 +43,14 @@ def boundary(x, on_boundary):
 mesh = RectangleMesh(Point(0,0),Point(10,1),100,10)
 
 # create function space
-DG = FiniteElement('DP', triangle, 1)
-V = FunctionSpace(mesh, DG)
+DG = FiniteElement('DP', mesh.ufl_cell(), 1)
+R = FiniteElement('R', mesh.ufl_cell(), 0)
+element = MixedElement([DG, R])
+V = FunctionSpace(mesh, element)
 
 # create test and trial functions
-u = TestFunction(V)
-v = TrialFunction(V)
+u,r = TestFunctions(V)
+v,q = TrialFunctions(V)
 
 # define DG tools
 h = CellSize(mesh)
@@ -59,12 +61,17 @@ alpha = 0.5
 # create initial conditions
 ut0 = Expression('2.0', degree=1)
 
+# source term
+f = Expression('0.0', degree=1)
+
+# boundary terms
+
 # define bilinear form
-b = u.dx(0)*v*dx(1) - (ut0*v)*dx(1) + (u.dx(0)*v.dx(0))*dx + (u.dx(1)*v.dx(1))*dx - (avg(u.dx(1))*jump(v))*dx(0)\
-		-(jump(u)*avg(v.dx(1)))*dx(0) + 0.5/h_avg*(jump(u)*jump(v))*dx(0)
+b = u.dx(0)*v*dx(1) + (u.dx(0)*v.dx(0))*dx + (u.dx(1)*v.dx(1))*dx - (avg(u.dx(1))*jump(v))*dx(0)\
+		-(jump(u)*avg(v.dx(1)))*dx(0) + alpha/h_avg*(jump(u)*jump(v))*dx(0)
 
 # define linear functional
-F = Constant(0.0)*v*dx
+F = f*v*dx + ut0*v*dx(1)
 
 # create boundary conditions
 bc1 = DirichletBC(V, 0.0, boundary)
