@@ -12,14 +12,20 @@ u_t(0,x) = 2
 
 The numerical method is as follows.
 
-we define the bilinear form as
+To facilitate defining the bilinear form, let ()dt be integration wrt. time 
+()dx integration wrt. x and () be integration over the entire domain.
 
-b(u,v) = (u_t,v_t) + (grad(u), grad(v)) - (jump(u\cdot n), avg(v))dS 
-- (avg(u), jump(v \cdot n))dS + a(avg(u),avg(v))dS 
+The bilinear form is
+
+b(u,v) = (u_t, v)dx - (u_t(0), v(0))dx + (u_t, v_t) + (u_x, v_x) - (avg(u_x), jump(v))dt
+		-(jump(u), avg(v_x))dt + 0.5/h *(jump(u), jump(v))dt
+
+The linear form is
+F(v) = (f,v)
 
 Then the numerical scheme is find u \in DG such that
 
-b(u,v) = f ( =0) \forall v \in DG
+b(u,v) = F(v) \forall v \in DG
 '''
 from dolfin import *
 import sys
@@ -50,12 +56,22 @@ n = FacetNormal(mesh)
 h_avg = avg(h)
 alpha = 0.5
 
+# create initial conditions
+ut0 = Expression('2.0', degree=1)
+
 # define bilinear form
-b = u.dx(0)*v.dx(0)*dx - inner(avg(v.dx(1)), jump(u,n))*dS - inner(avg(u.dx(1)), jump(v,n))*dS + (alpha/h_avg)*inner(jump(u,n), jump(v,n))*dS
+b = u.dx(0)*v*dx(1) - (ut0*v)*dx(1) + (u.dx(0)*v.dx(0))*dx + (u.dx(1)*v.dx(1))*dx - (avg(u.dx(1))*jump(v))*dx(0)\
+		-(jump(u)*avg(v.dx(1)))*dx(0) + 0.5/h_avg*(jump(u)*jump(v))*dx(0)
 
 # define linear functional
-f = Constant(0.0)*v*dx
+F = Constant(0.0)*v*dx
 
 # create boundary conditions
-bc1 = DirichletBC(DG, 0.0, boundary)
-bc2 = DirichletBC(DG, 2.0, boundary)
+bc1 = DirichletBC(V, 0.0, boundary)
+
+# solve linear system
+U = Function(V)
+solve(b == F, U, bc1)
+
+# output solution
+File('zumbusch.pvd') << U
